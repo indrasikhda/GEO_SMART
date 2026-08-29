@@ -57,14 +57,13 @@ def calculate_fahp_weights(matrix):
 
 def get_default_pairwise_matrix():
     """
-    Returns initial default 8x8 pairwise comparison matrix
+    Returns initial 8x8 pairwise comparison matrix with equal importance.
+    All criteria are considered equally important (value = 1.0).
+    
+    Expert judgement should be applied by modifying this matrix
+    using Saaty's 1-9 scale for pairwise comparisons.
     """
-    # Default relative preference ratios
-    prefs = [0.18, 0.22, 0.25, 0.10, 0.12, 0.05, 0.04, 0.04]
-    n = len(prefs)
+    n = 8  # Number of criteria
+    # Initialize with equal importance (identity-like matrix)
     matrix = np.ones((n, n), dtype=np.float64)
-    for i in range(n):
-        for j in range(n):
-            if i != j:
-                matrix[i, j] = prefs[i] / prefs[j]
     return matrix.tolist()
