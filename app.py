@@ -1,113 +1,376 @@
 import streamlit as st
 
-# Page Config
+# Page Configuration
 st.set_page_config(
     page_title="GEO-SMART — Geothermal Spatial Intelligence & Monitoring System",
-    page_icon="🌋",
+    page_icon="⚡",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Motokoui Exact Design System CSS
+# ═══════════════════════════════════════════════════════════════════════
+# EXPLORATION COMMAND CENTER - DESIGN SYSTEM
+# Light Professional Theme for Geothermal Monitoring & Decision Support
+# ═══════════════════════════════════════════════════════════════════════
+
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
-    /* Global Body Background matching Motokoui Screenshot */
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* Global Layout & Base Colors */
+    /* ─────────────────────────────────────────────────────────────────── */
+    :root {
+        --color-primary: #0891B2;        /* Teal - Energy/Geothermal accent */
+        --color-primary-dark: #0E7490;
+        --color-success: #059669;         /* Green - Active/Valid */
+        --color-warning: #D97706;         /* Amber - Caution */
+        --color-danger: #DC2626;          /* Red - Critical */
+        --color-info: #2563EB;            /* Blue - Info */
+        --color-neutral: #64748B;         /* Slate - Secondary text */
+        
+        --bg-app: #F8FAFC;                /* App background */
+        --bg-card: #FFFFFF;               /* Card background */
+        --bg-sidebar: #FFFFFF;            /* Sidebar background */
+        
+        --border-color: #E2E8F0;          /* Default border */
+        --border-color-hover: #CBD5E1;
+        
+        --text-primary: #0F172A;          /* Primary text */
+        --text-secondary: #475569;        /* Secondary text */
+        --text-tertiary: #64748B;         /* Tertiary text */
+        
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.06);
+    }
+
     html, body, [data-testid="stAppViewContainer"] {
-        background-color: #F3F3F5 !important;
-        color: #1C1C1E !important;
+        background-color: var(--bg-app) !important;
+        color: var(--text-primary) !important;
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
     }
 
     [data-testid="stHeader"] {
-        background-color: #F3F3F5 !important;
+        background-color: var(--bg-app) !important;
     }
 
-    /* Main Container Padding */
     .main .block-container {
-        padding-top: 0.75rem !important;
-        padding-bottom: 2rem !important;
-        max-width: 1360px !important;
+        padding-top: 2rem !important;
+        padding-bottom: 3rem !important;
+        max-width: 1400px !important;
     }
 
-    /* Motokoui Sidebar Styling */
-    [data-testid="stSidebar"] {
-        background-color: #F3F3F5 !important;
-        border-right: none !important;
-        padding-top: 0.5rem !important;
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* Typography System */
+    /* ─────────────────────────────────────────────────────────────────── */
+    h1, h2, h3, .stHeadingContainer h1, .stHeadingContainer h2, .stHeadingContainer h3 {
+        font-weight: 800 !important;
+        color: var(--text-primary) !important;
+        letter-spacing: -0.02em !important;
     }
 
-    /* Sidebar Radio Options to match Active Pill Capsule */
-    .stRadio > div {
-        gap: 0.25rem !important;
+    h1, .stHeadingContainer h1 {
+        font-size: 2rem !important;
+        margin-bottom: 0.5rem !important;
     }
 
-    .stRadio label {
-        background: transparent !important;
-        color: #636366 !important;
-        padding: 10px 14px !important;
-        border-radius: 12px !important;
-        font-size: 0.875rem !important;
-        font-weight: 500 !important;
-        cursor: pointer !important;
-        border: none !important;
-        transition: all 0.15s ease !important;
+    h2, .stHeadingContainer h2 {
+        font-size: 1.5rem !important;
+        margin-bottom: 0.75rem !important;
     }
 
-    .stRadio label:hover {
-        background: rgba(255, 255, 255, 0.6) !important;
-        color: #1C1C1E !important;
+    h3, .stHeadingContainer h3 {
+        font-size: 1.125rem !important;
+        margin-bottom: 0.5rem !important;
     }
 
-    /* Active Nav Item as Pure White Capsule Card */
-    .stRadio div[aria-checked="true"] label, .stRadio label[data-checked="true"] {
-        background: #FFFFFF !important;
-        color: #1C1C1E !important;
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* KPI Metric Cards - Command Center Style */
+    /* ─────────────────────────────────────────────────────────────────── */
+    [data-testid="stMetric"] {
+        background-color: var(--bg-card) !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 10px !important;
+        padding: 1.25rem !important;
+        box-shadow: var(--shadow-sm) !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+
+    [data-testid="stMetric"]:hover {
+        box-shadow: var(--shadow-md) !important;
+        border-color: var(--color-primary) !important;
+        transform: translateY(-2px) !important;
+    }
+
+    [data-testid="stMetricLabel"] {
+        font-size: 0.7rem !important;
         font-weight: 700 !important;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04) !important;
-        border-radius: 12px !important;
+        color: var(--text-tertiary) !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.08em !important;
+        margin-bottom: 0.5rem !important;
     }
 
-    /* Motokoui White Dashboard Cards (20px Rounded Corners) */
-    div.motokoui-card {
-        background: #FFFFFF;
-        border-radius: 20px;
-        border: 1px solid #ECECEC;
-        padding: 22px 24px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+    [data-testid="stMetricValue"] {
+        font-size: 2rem !important;
+        font-weight: 900 !important;
+        color: var(--text-primary) !important;
+        line-height: 1 !important;
+        letter-spacing: -0.02em !important;
+    }
+
+    [data-testid="stMetricDelta"] {
+        font-size: 0.75rem !important;
+        font-weight: 600 !important;
+        margin-top: 0.5rem !important;
+        padding: 0.25rem 0.5rem !important;
+        border-radius: 4px !important;
+        display: inline-block !important;
+    }
+
+    [data-testid="stMetricDelta"] svg {
+        display: none !important;
+    }
+
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* Badge System - Status Pills */
+    /* ─────────────────────────────────────────────────────────────────── */
+    .status-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .badge-success {
+        background-color: #D1FAE5;
+        color: #065F46;
+        border: 1px solid #A7F3D0;
+    }
+
+    .badge-warning {
+        background-color: #FEF3C7;
+        color: #92400E;
+        border: 1px solid #FDE68A;
+    }
+
+    .badge-danger {
+        background-color: #FEE2E2;
+        color: #991B1B;
+        border: 1px solid #FCA5A5;
+    }
+
+    .badge-info {
+        background-color: #DBEAFE;
+        color: #1E3A8A;
+        border: 1px solid #BFDBFE;
+    }
+
+    .badge-neutral {
+        background-color: #F1F5F9;
+        color: #475569;
+        border: 1px solid #E2E8F0;
+    }
+
+    .badge-primary {
+        background-color: #CFFAFE;
+        color: #164E63;
+        border: 1px solid #A5F3FC;
+    }
+
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* Section Headers with Icons */
+    /* ─────────────────────────────────────────────────────────────────── */
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1.25rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid var(--border-color);
+    }
+
+    .section-icon {
+        width: 36px;
+        height: 36px;
+        background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        color: white;
+        flex-shrink: 0;
+    }
+
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin: 0;
+    }
+
+    .section-subtitle {
+        font-size: 0.8rem;
+        color: var(--text-tertiary);
+        margin: 0;
+        font-weight: 500;
+    }
+
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* Data Cards - Content Containers */
+    /* ─────────────────────────────────────────────────────────────────── */
+    .data-card {
+        background-color: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: var(--shadow-sm);
         margin-bottom: 1.25rem;
     }
 
-    /* Black Pill Buttons matching Motokoui 'Buy template' & 'Sign in' */
-    .stButton > button {
-        background-color: #1C1C1E !important;
+    .data-card-header {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* Sidebar Navigation - Clean & Professional */
+    /* ─────────────────────────────────────────────────────────────────── */
+    [data-testid="stSidebar"] {
+        background-color: var(--bg-sidebar) !important;
+        border-right: 2px solid var(--border-color) !important;
+        padding-top: 1rem !important;
+    }
+
+    [data-testid="stSidebar"] .stRadio > div {
+        gap: 0.35rem !important;
+    }
+
+    [data-testid="stSidebar"] .stRadio label {
+        background: transparent !important;
+        color: var(--text-secondary) !important;
+        padding: 0.65rem 1rem !important;
+        border-radius: 6px !important;
+        font-size: 0.875rem !important;
+        font-weight: 600 !important;
+        cursor: pointer !important;
+        border: 1px solid transparent !important;
+        transition: all 0.15s ease !important;
+    }
+
+    [data-testid="stSidebar"] .stRadio label:hover {
+        background-color: #F8FAFC !important;
+        color: var(--text-primary) !important;
+        border-color: var(--border-color) !important;
+    }
+
+    [data-testid="stSidebar"] .stRadio div[aria-checked="true"] label {
+        background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%) !important;
         color: #FFFFFF !important;
-        border-radius: 9999px !important;
-        border: none !important;
-        font-size: 0.85rem !important;
         font-weight: 700 !important;
-        padding: 0.55rem 1.4rem !important;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.1) !important;
-        transition: transform 0.1s ease, background-color 0.15s ease !important;
+        border-color: var(--color-primary-dark) !important;
+        box-shadow: var(--shadow-md) !important;
+    }
+
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* Buttons - Primary Action Style */
+    /* ─────────────────────────────────────────────────────────────────── */
+    .stButton > button {
+        background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%) !important;
+        color: #FFFFFF !important;
+        border-radius: 6px !important;
+        border: none !important;
+        font-size: 0.875rem !important;
+        font-weight: 700 !important;
+        padding: 0.625rem 1.5rem !important;
+        box-shadow: var(--shadow-sm) !important;
+        transition: all 0.2s ease !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.05em !important;
     }
 
     .stButton > button:hover {
-        background-color: #3A3A3C !important;
-        color: #FFFFFF !important;
-        transform: translateY(-1px);
+        box-shadow: var(--shadow-md) !important;
+        transform: translateY(-1px) !important;
     }
 
-    /* Table & Dataframe Styling */
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* Alert Boxes - Minimal Design */
+    /* ─────────────────────────────────────────────────────────────────── */
+    [data-testid="stAlert"] {
+        border-radius: 8px !important;
+        border-width: 1px !important;
+        font-size: 0.85rem !important;
+        padding: 0.75rem 1rem !important;
+    }
+
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* DataFrames & Tables */
+    /* ─────────────────────────────────────────────────────────────────── */
     [data-testid="stDataFrame"] {
-        border: 1px solid #EBEBEB !important;
-        border-radius: 14px !important;
-        background: #FFFFFF !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 8px !important;
+        background: var(--bg-card) !important;
+        font-size: 0.85rem !important;
     }
 
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* Dividers */
+    /* ─────────────────────────────────────────────────────────────────── */
     hr {
-        border-color: #E5E5EA !important;
-        margin: 1.25rem 0 !important;
+        border-color: var(--border-color) !important;
+        margin: 1.5rem 0 !important;
+        border-width: 1px !important;
+    }
+
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* Expander - Collapsed Details */
+    /* ─────────────────────────────────────────────────────────────────── */
+    .streamlit-expanderHeader {
+        font-weight: 600 !important;
+        font-size: 0.875rem !important;
+        color: var(--text-secondary) !important;
+    }
+
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* Page Header Style */
+    /* ─────────────────────────────────────────────────────────────────── */
+    .page-header {
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid var(--border-color);
+    }
+
+    .page-breadcrumb {
+        font-size: 0.75rem;
+        color: var(--text-tertiary);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-bottom: 0.5rem;
+    }
+
+    .page-title {
+        font-size: 2rem;
+        font-weight: 900;
+        color: var(--text-primary);
+        margin: 0;
+        letter-spacing: -0.02em;
+    }
+
+    .page-description {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        margin-top: 0.5rem;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -123,30 +386,30 @@ from views.temporal import render_temporal
 from views.methods import render_methods
 from views.data_sources import render_data_sources
 
-# Motokoui Left Sidebar Structure
+# Sidebar Navigation Structure
 with st.sidebar:
-    # Top Workspace Switcher matching Motokoui Screenshot
+    # Brand Header - Clean & Professional
     st.markdown("""
-        <div style="padding: 10px 14px; background: #EAEAED; border-radius: 14px; margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: space-between;">
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <div style="width: 24px; height: 24px; background: #1C1C1E; color: #FFFFFF; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 11px;">G</div>
-                <div>
-                    <div style="font-weight: 700; font-size: 12px; color: #1C1C1E; line-height: 1.2;">GEO-SMART</div>
-                    <div style="font-size: 10px; color: #8E8E93;">Minahasa Sector</div>
-                </div>
+        <div style="text-align:center;padding:1.5rem 0 1rem 0;border-bottom:2px solid #E2E8F0;">
+            <div style="width:48px;height:48px;margin:0 auto 0.75rem;background:linear-gradient(135deg, #0891B2 0%, #0E7490 100%);border-radius:10px;display:flex;align-items:center;justify-content:center;">
+                <span style="font-size:1.5rem;color:#FFFFFF;">⚡</span>
             </div>
-            <span style="font-size: 12px; color: #8E8E93;">↕</span>
+            <h2 style="margin:0;font-size:1.25rem;font-weight:900;color:#0F172A;letter-spacing:-0.02em;">GEO-SMART</h2>
+            <p style="margin:0.25rem 0 0 0;font-size:0.7rem;color:#64748B;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;">
+                Geothermal Intelligence System
+            </p>
         </div>
-        <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: #8E8E93; letter-spacing: 0.05em; padding-left: 6px; margin-bottom: 6px;">General</div>
     """, unsafe_allow_html=True)
+    
+    st.write("")
 
     nav_selection = st.radio(
         "Navigation",
         [
             "Overview",
             "Remote Sensing",
-            "Geological Evidence",
-            "FAHP & GPI",
+            "Multi-Source Evidence",
+            "AHP & GPI",
             "Priority Zones",
             "GMN Monitoring",
             "Temporal Monitoring",
@@ -156,63 +419,55 @@ with st.sidebar:
         label_visibility="collapsed"
     )
 
-    # Bottom Black Pill Button matching Motokoui 'Buy template' button
+    st.write("")
+    
+    # System Status - Compact Badge Display
     st.markdown("""
-        <div style="margin-top: 3rem; padding: 0 4px;">
-            <div style="background: #1C1C1E; color: #FFFFFF; text-align: center; padding: 12px; border-radius: 9999px; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-                🌋 GEO-SMART V0.1
+        <div style="padding:0.75rem;background:#F8FAFC;border-radius:8px;border:1px solid #E2E8F0;">
+            <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;">
+                <span class="status-badge badge-primary">STAGE</span>
+                <span style="font-size:0.75rem;font-weight:600;color:#475569;">Prototype</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:0.5rem;">
+                <span class="status-badge badge-info">REGION</span>
+                <span style="font-size:0.75rem;font-weight:600;color:#475569;">Sulawesi Utara</span>
             </div>
         </div>
     """, unsafe_allow_html=True)
+    
+    st.caption("v1.0 | 2025")
 
-# Motokoui Top Header Bar (Matching Screenshots 1 & 2)
-col_header_left, col_header_right = st.columns([7, 5])
+# Top Header Area
+NAV_CATEGORIES = {
+    "Overview": "System Dashboard",
+    "Remote Sensing": "Spatial Data",
+    "Multi-Source Evidence": "Evidence Layers",
+    "Data Sources": "Data Management",
+    "AHP & GPI": "Decision Engine",
+    "Priority Zones": "Exploration Zones",
+    "GMN Monitoring": "Field Network",
+    "Temporal Monitoring": "Time Series",
+    "Methods": "Methodology"
+}
 
-with col_header_left:
-    st.markdown(f"""
-        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 0.5rem;">
-            <div style="width: 32px; height: 32px; background: #FFFFFF; border-radius: 10px; border: 1px solid #E5E5EA; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px;">📖</div>
-            <h1 style="font-size: 1.85rem; font-weight: 800; color: #1C1C1E; margin: 0; letter-spacing: -0.02em;">
-                {nav_selection}
-            </h1>
-            <div style="display: flex; background: #EAEAED; padding: 3px; border-radius: 9999px; font-size: 12px; font-weight: 600; color: #636366;">
-                <span style="padding: 4px 12px; color: #636366;">This week</span>
-                <span style="padding: 4px 14px; background: #FFFFFF; color: #1C1C1E; border-radius: 9999px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); font-weight: 700;">This month</span>
-                <span style="padding: 4px 12px; color: #636366;">This quarter</span>
-            </div>
-        </div>
-    """, unsafe_allow_html=True)
+category = NAV_CATEGORIES.get(nav_selection, "Command Center")
 
-with col_header_right:
-    st.markdown("""
-        <div style="display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 4px;">
-            <div style="display: flex; align-items: center; background: #FFFFFF; border: 1px solid #E5E5EA; padding: 6px 14px; border-radius: 9999px; font-size: 12px; color: #8E8E93; gap: 8px; width: 190px;">
-                <span>🔍 Search...</span>
-                <span style="margin-left: auto; background: #F2F2F7; border: 1px solid #E5E5EA; padding: 1px 5px; border-radius: 4px; font-size: 10px; font-weight: 700; color: #8E8E93;">⌘K</span>
-            </div>
-            <div style="width: 32px; height: 32px; background: #FFFFFF; border-radius: 9999px; border: 1px solid #E5E5EA; display: flex; align-items: center; justify-content: center; font-size: 13px; position: relative;">
-                🔔
-                <span style="position: absolute; top: -2px; right: -2px; width: 14px; height: 14px; background: #1C1C1E; color: #FFFFFF; border-radius: 9999px; font-size: 9px; font-weight: 800; display: flex; align-items: center; justify-content: center;">3</span>
-            </div>
-            <div style="width: 32px; height: 32px; background: #FFFFFF; border-radius: 9999px; border: 1px solid #E5E5EA; display: flex; align-items: center; justify-content: center; font-size: 13px;">
-                🎨
-            </div>
-            <div style="background: #1C1C1E; color: #FFFFFF; padding: 7px 16px; border-radius: 9999px; font-size: 12px; font-weight: 700; cursor: pointer;">
-                Prototype
-            </div>
-        </div>
-    """, unsafe_allow_html=True)
-
-st.markdown("<div style='margin-bottom: 1.25rem;'></div>", unsafe_allow_html=True)
+# Page Header with breadcrumb
+st.markdown(f"""
+    <div class="page-header">
+        <div class="page-breadcrumb">GEOSMART / {category.upper()}</div>
+        <h1 class="page-title">{nav_selection}</h1>
+    </div>
+""", unsafe_allow_html=True)
 
 # Page Routing
 if nav_selection == "Overview":
     render_overview()
 elif nav_selection == "Remote Sensing":
     render_remote_sensing()
-elif nav_selection == "Geological Evidence":
+elif nav_selection == "Multi-Source Evidence":
     render_evidence()
-elif nav_selection == "FAHP & GPI":
+elif nav_selection == "AHP & GPI":
     render_fahp_gpi()
 elif nav_selection == "Priority Zones":
     render_priority()

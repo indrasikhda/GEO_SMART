@@ -6,89 +6,140 @@ from core.io import PRIORITY_ZONES
 from core.maps import create_base_map
 
 def render_priority():
+    # Priority Distribution Summary
+    st.markdown('<div class="data-card-header">Priority Zone Classification</div>', unsafe_allow_html=True)
+    
+    high = sum(1 for z in PRIORITY_ZONES if z['priority'] == 'High')
+    moderate = sum(1 for z in PRIORITY_ZONES if z['priority'] == 'Moderate')
+    low = sum(1 for z in PRIORITY_ZONES if z['priority'] == 'Low')
+    
+    k1, k2, k3, k4 = st.columns(4)
+    
+    with k1:
+        st.metric(label="Total Zones", value=len(PRIORITY_ZONES), delta="Candidates")
+    
+    with k2:
+        st.metric(label="High Priority", value=high, delta="GPI ≥0.75")
+    
+    with k3:
+        st.metric(label="Moderate", value=moderate, delta="GPI 0.60-0.74")
+    
+    with k4:
+        st.metric(label="Low Priority", value=low, delta="GPI <0.60")
+    
+    st.write("")
+    
+    # Demo Data Notice
     st.markdown("""
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:1.25rem;">
-            <span style="font-size:0.75rem;font-weight:700;color:#FF9500;background:#FFF4E0;padding:4px 12px;border-radius:9999px;">DEMO DATA</span>
-            <span style="font-size:0.85rem;color:#636366;">Target prospect identification and spatial constraint ranking</span>
+        <div class="data-card" style="background:#FEF3C7;border-color:#FDE68A;">
+            <div style="display:flex;align-items:center;gap:0.75rem;">
+                <span class="status-badge badge-warning">DEMO DATA</span>
+                <div style="font-size:0.85rem;color:#92400E;">
+                    Priority zones demonstrate workflow. Full GPI raster generation requires complete geological dataset.
+                </div>
+            </div>
         </div>
     """, unsafe_allow_html=True)
-
-    # KPI Cards
-    k1, k2, k3, k4 = st.columns(4)
-    with k1:
-        st.markdown("""
-            <div style="background:#FFFFFF;border-radius:20px;border:1px solid #ECECEC;padding:20px 22px;box-shadow:0 2px 10px rgba(0,0,0,0.02);">
-                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
-                    <span style="font-size:0.85rem;font-weight:600;color:#636366;">High Priority</span>
-                    <div style="width:26px;height:26px;border-radius:9999px;background:#FDE8E8;display:flex;align-items:center;justify-content:center;font-size:13px;">🔴</div>
-                </div>
-                <div style="font-size:1.75rem;font-weight:800;color:#1C1C1E;">6</div>
-                <span style="font-size:0.72rem;font-weight:600;color:#FF3B30;">High prospect sectors</span>
-            </div>
-        """, unsafe_allow_html=True)
-
-    with k2:
-        st.markdown("""
-            <div style="background:#FFFFFF;border-radius:20px;border:1px solid #ECECEC;padding:20px 22px;box-shadow:0 2px 10px rgba(0,0,0,0.02);">
-                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
-                    <span style="font-size:0.85rem;font-weight:600;color:#636366;">Moderate Priority</span>
-                    <div style="width:26px;height:26px;border-radius:9999px;background:#FFF4E0;display:flex;align-items:center;justify-content:center;font-size:13px;">🟡</div>
-                </div>
-                <div style="font-size:1.75rem;font-weight:800;color:#1C1C1E;">5</div>
-                <span style="font-size:0.72rem;font-weight:600;color:#FF9500;">Moderate prospect sectors</span>
-            </div>
-        """, unsafe_allow_html=True)
-
-    with k3:
-        st.markdown("""
-            <div style="background:#FFFFFF;border-radius:20px;border:1px solid #ECECEC;padding:20px 22px;box-shadow:0 2px 10px rgba(0,0,0,0.02);">
-                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
-                    <span style="font-size:0.85rem;font-weight:600;color:#636366;">Low Priority</span>
-                    <div style="width:26px;height:26px;border-radius:9999px;background:#E8FAF0;display:flex;align-items:center;justify-content:center;font-size:13px;">🟢</div>
-                </div>
-                <div style="font-size:1.75rem;font-weight:800;color:#1C1C1E;">1</div>
-                <span style="font-size:0.72rem;font-weight:600;color:#34C759;">Low prospect sectors</span>
-            </div>
-        """, unsafe_allow_html=True)
-
-    with k4:
-        total_area = sum(z["area"] for z in PRIORITY_ZONES)
-        st.markdown(f"""
-            <div style="background:#FFFFFF;border-radius:20px;border:1px solid #ECECEC;padding:20px 22px;box-shadow:0 2px 10px rgba(0,0,0,0.02);">
-                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
-                    <span style="font-size:0.85rem;font-weight:600;color:#636366;">Total Coverage</span>
-                    <div style="width:26px;height:26px;border-radius:9999px;background:#F2F2F7;display:flex;align-items:center;justify-content:center;font-size:13px;">📏</div>
-                </div>
-                <div style="font-size:1.75rem;font-weight:800;color:#1C1C1E;">{total_area} km²</div>
-                <span style="font-size:0.72rem;font-weight:600;color:#34C759;">+4.2% vs last survey</span>
-            </div>
-        """, unsafe_allow_html=True)
-
-    st.markdown("<div style='margin-bottom:1.25rem'></div>", unsafe_allow_html=True)
-
-    col_map, col_table = st.columns([7, 5], gap="medium")
-
-    with col_map:
-        m = create_base_map(center=[1.325, 124.845], zoom=12)
-        for z in PRIORITY_ZONES:
-            color = "#FF3B30" if z["priority"] == "High" else "#FF9500"
-            folium.Circle(
-                location=[z["lat"], z["lng"]],
-                radius=z["area"] * 250,
-                color=color, fill=True, fill_color=color, fill_opacity=0.3,
-                popup=f"<b>{z['zone']}</b><br>GPI: {z['gpi']} ({z['priority']})<br>Area: {z['area']} km²"
-            ).add_to(m)
-        st_folium(m, width="100%", height=480, key="priority_saas_map")
-
+    
+    st.write("")
+    
+    # Main Layout
+    col_table, col_map = st.columns([5, 7], gap="large")
+    
     with col_table:
-        df = pd.DataFrame(PRIORITY_ZONES)
-        df["Rank"] = range(1, len(df) + 1)
-        df_show = df[["Rank", "zone", "gpi", "area", "priority", "constraint"]]
-        df_show.columns = ["Rank", "Zone", "GPI", "Area (km²)", "Priority", "Constraint"]
+        st.markdown('<div class="data-card-header">Zone Ranking</div>', unsafe_allow_html=True)
+        
+        # Sort by GPI descending
+        sorted_zones = sorted(PRIORITY_ZONES, key=lambda x: x['gpi'], reverse=True)
+        
+        for zone in sorted_zones:
+            priority_colors = {
+                'High': ('success', '#ECFDF5'),
+                'Moderate': ('warning', '#FFFBEB'),
+                'Low': ('neutral', '#F8FAFC')
+            }
+            badge_type, bg_color = priority_colors.get(zone['priority'], ('neutral', '#F8FAFC'))
+            
+            st.markdown(f"""
+                <div style="padding:0.75rem;margin-bottom:0.5rem;border:1px solid #E2E8F0;border-radius:8px;background:{bg_color};">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+                        <span style="font-size:0.9rem;font-weight:700;color:#0F172A;">{zone['zone']}</span>
+                        <span class="status-badge badge-{badge_type}">{zone['priority']}</span>
+                    </div>
+                    <div style="display:flex;gap:1rem;font-size:0.75rem;color:#64748B;">
+                        <div><b>GPI:</b> {zone['gpi']}</div>
+                        <div><b>Area:</b> {zone['area']} km²</div>
+                    </div>
+                    {f'<div style="margin-top:0.5rem;font-size:0.7rem;color:#DC2626;">⚠ {zone["constraint"]}</div>' if zone.get('constraint') else ''}
+                </div>
+            """, unsafe_allow_html=True)
+        
+        st.write("")
+        
+        # Classification Criteria
+        with st.expander("Classification Criteria", expanded=False):
+            st.markdown("""
+                **Priority Thresholds:**
+                - **High:** GPI ≥ 0.75 + No major constraints
+                - **Moderate:** GPI 0.60-0.74 OR constraints present
+                - **Low:** GPI < 0.60
+                
+                **Constraint Types:**
+                - Environmental reserves / protected areas
+                - Urban buffer zones
+                - Volcanic crater buffers
+                - Infrastructure corridors
+            """)
+    
+    with col_map:
+        st.markdown('<div class="data-card-header">Spatial Distribution</div>', unsafe_allow_html=True)
+        
+        m = create_base_map(center=[1.30, 124.85], zoom=10)
+        
+        # Add zone markers
+        priority_colors_map = {
+            'High': '#059669',
+            'Moderate': '#D97706',
+            'Low': '#64748B'
+        }
+        
+        for zone in PRIORITY_ZONES:
+            color = priority_colors_map.get(zone['priority'], '#64748B')
+            
+            folium.CircleMarker(
+                location=[zone['lat'], zone['lng']],
+                radius=8,
+                color=color,
+                fill=True,
+                fillColor=color,
+                fillOpacity=0.7,
+                popup=f"""
+                    <b>{zone['zone']}</b><br>
+                    Priority: {zone['priority']}<br>
+                    GPI: {zone['gpi']}<br>
+                    Area: {zone['area']} km²
+                    {f"<br><span style='color:#DC2626;'>⚠ {zone['constraint']}</span>" if zone.get('constraint') else ''}
+                """,
+                tooltip=f"{zone['zone']} - {zone['priority']}"
+            ).add_to(m)
+        
+        folium.LayerControl().add_to(m)
+        st_folium(m, width="100%", height=600, key="priority_zones_map")
+        
+        # Legend
         st.markdown("""
-            <div style="background:#FFFFFF;border-radius:20px;border:1px solid #ECECEC;padding:22px;box-shadow:0 2px 10px rgba(0,0,0,0.02);">
-                <h3 style="font-size:1rem;font-weight:800;color:#1C1C1E;margin:0 0 4px 0;">Zone Ranking Table</h3>
-                <p style="font-size:0.75rem;color:#8E8E93;margin:0 0 12px 0;">Priority zones sorted by GPI score</p>
+            <div style="display:flex;gap:1.5rem;margin-top:0.75rem;font-size:0.8rem;">
+                <div style="display:flex;align-items:center;gap:0.5rem;">
+                    <div style="width:12px;height:12px;border-radius:50%;background:#059669;"></div>
+                    <span class="status-badge badge-success">High Priority</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:0.5rem;">
+                    <div style="width:12px;height:12px;border-radius:50%;background:#D97706;"></div>
+                    <span class="status-badge badge-warning">Moderate</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:0.5rem;">
+                    <div style="width:12px;height:12px;border-radius:50%;background:#64748B;"></div>
+                    <span class="status-badge badge-neutral">Low Priority</span>
+                </div>
+            </div>
         """, unsafe_allow_html=True)
-        st.dataframe(df_show, use_container_width=True, hide_index=True)
-        st.markdown("</div>", unsafe_allow_html=True)

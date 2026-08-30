@@ -1,140 +1,258 @@
 import streamlit as st
 import folium
 from streamlit_folium import st_folium
-import plotly.express as px
 import pandas as pd
+
 from core.io import GMN_NODES
 from core.maps import create_base_map
 
+
 def render_monitoring():
+    """
+    GMN Monitoring View - GEO-SMART (Modern Minimalist Clean Layout)
+    """
+
+    # ── Custom CSS for Compact Pill Badges, Minimal Cards & Smaller Metrics ──
     st.markdown("""
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:1.25rem;">
-            <span style="font-size:0.75rem;font-weight:700;color:#007AFF;background:#E3F0FF;padding:4px 12px;border-radius:9999px;">SIMULATED SENSOR DATA</span>
-            <span style="font-size:0.85rem;color:#636366;">Physical IoT sensors not yet deployed</span>
-        </div>
+        <style>
+        /* ── Override khusus untuk mengecilkan ukuran Metric Card di halaman GMN ── */
+        [data-testid="stMetricValue"] {
+            font-size: 1.35rem !important;  /* Ukuran nilai metric diperkecil */
+            font-weight: 800 !important;
+            line-height: 1.2 !important;
+        }
+        [data-testid="stMetricLabel"] {
+            font-size: 0.68rem !important;  /* Ukuran judul metric */
+            font-weight: 700 !important;
+        }
+        [data-testid="stMetricDelta"] {
+            font-size: 0.70rem !important;  /* Ukuran teks delta (sub-label) diperkecil */
+            padding: 0.15rem 0.4rem !important;
+            margin-top: 0.3rem !important;
+        }
+
+        /* ── CSS Bawaan GMN ── */
+        .gmn-pill-proposed {
+            background-color: #EFF6FF;
+            color: #1D4ED8;
+            padding: 3px 10px;
+            border-radius: 9999px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            border: 1px solid #BFDBFE;
+            display: inline-block;
+        }
+        .gmn-pill-online {
+            background-color: #ECFDF5;
+            color: #047857;
+            padding: 3px 10px;
+            border-radius: 9999px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            border: 1px solid #A7F3D0;
+            display: inline-block;
+        }
+        .gmn-metric-label {
+            font-size: 0.70rem !important;
+            color: #64748B !important;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+        .gmn-metric-val {
+            font-size: 1.05rem !important;
+            color: #0F172A !important;
+            font-weight: 800;
+        }
+        </style>
     """, unsafe_allow_html=True)
 
-    # KPI Cards
+    # ── TOP KPI ROW ─────────────────────────────────────────────────────────
     k1, k2, k3, k4 = st.columns(4)
     with k1:
-        st.markdown("""
-            <div style="background:#FFFFFF;border-radius:20px;border:1px solid #ECECEC;padding:20px 22px;box-shadow:0 2px 10px rgba(0,0,0,0.02);">
-                <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-                    <span style="font-size:0.85rem;font-weight:600;color:#636366;">Online Nodes</span>
-                    <div style="width:26px;height:26px;border-radius:9999px;background:#E8FAF0;display:flex;align-items:center;justify-content:center;font-size:13px;">📡</div>
-                </div>
-                <div style="font-size:1.75rem;font-weight:800;color:#1C1C1E;">3 / 3</div>
-                <span style="font-size:0.72rem;font-weight:600;color:#34C759;">100% nodes online</span>
-            </div>""", unsafe_allow_html=True)
+        st.metric(label="GMN Nodes", value=len(GMN_NODES), delta="Proposed Network")
     with k2:
-        st.markdown("""
-            <div style="background:#FFFFFF;border-radius:20px;border:1px solid #ECECEC;padding:20px 22px;box-shadow:0 2px 10px rgba(0,0,0,0.02);">
-                <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-                    <span style="font-size:0.85rem;font-weight:600;color:#636366;">Temperature</span>
-                    <div style="width:26px;height:26px;border-radius:9999px;background:#FFF4E0;display:flex;align-items:center;justify-content:center;font-size:13px;">🌡️</div>
-                </div>
-                <div style="font-size:1.75rem;font-weight:800;color:#1C1C1E;">68.4 °C</div>
-                <span style="font-size:0.72rem;font-weight:600;color:#FF9500;">+1.8°C vs prior</span>
-            </div>""", unsafe_allow_html=True)
+        st.metric(label="Node Status", value="Simulated", delta="Pre-deployment")
     with k3:
-        st.markdown("""
-            <div style="background:#FFFFFF;border-radius:20px;border:1px solid #ECECEC;padding:20px 22px;box-shadow:0 2px 10px rgba(0,0,0,0.02);">
-                <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-                    <span style="font-size:0.85rem;font-weight:600;color:#636366;">pH Level</span>
-                    <div style="width:26px;height:26px;border-radius:9999px;background:#F2F2F7;display:flex;align-items:center;justify-content:center;font-size:13px;">🧪</div>
-                </div>
-                <div style="font-size:1.75rem;font-weight:800;color:#1C1C1E;">3.25</div>
-                <span style="font-size:0.72rem;font-weight:600;color:#FF3B30;">-0.07 vs prior</span>
-            </div>""", unsafe_allow_html=True)
+        st.metric(label="Telemetry Parameters", value="11 Channels", delta="Subsurface & Gas")
     with k4:
-        st.markdown("""
-            <div style="background:#FFFFFF;border-radius:20px;border:1px solid #ECECEC;padding:20px 22px;box-shadow:0 2px 10px rgba(0,0,0,0.02);">
-                <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-                    <span style="font-size:0.85rem;font-weight:600;color:#636366;">Conductivity (EC)</span>
-                    <div style="width:26px;height:26px;border-radius:9999px;background:#F2F2F7;display:flex;align-items:center;justify-content:center;font-size:13px;">⚡</div>
-                </div>
-                <div style="font-size:1.75rem;font-weight:800;color:#1C1C1E;">3,840 µS</div>
-                <span style="font-size:0.72rem;font-weight:600;color:#34C759;">+90 µS vs prior</span>
-            </div>""", unsafe_allow_html=True)
+        st.metric(label="Data Pipeline", value="LoRa / 4G", delta="IoT Field-to-Cloud")
 
-    st.markdown("<div style='margin-bottom:1.25rem'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='margin-bottom: 1rem;'></div>", unsafe_allow_html=True)
 
-    col_map, col_nodes = st.columns([7, 5], gap="medium")
+    # ── MAIN SPLIT LAYOUT: NODE STATUS (LEFT) + MAP (RIGHT) ─────────────────
+    col_nodes, col_map = st.columns([5, 7], gap="medium")
 
-    with col_map:
-        m = create_base_map(center=[1.325, 124.845], zoom=12)
-        for node in GMN_NODES:
-            folium.Marker(
-                location=[node["lat"], node["lng"]],
-                popup=f"<b>{node['id']}</b>: {node['name']}<br>Temp: {node['temp']}°C | pH: {node['ph']}",
-                icon=folium.Icon(color="green", icon="info-sign")
-            ).add_to(m)
-        st_folium(m, width="100%", height=440, key="gmn_saas_map")
-
+    # ------------------------------------------------------------------------
+    # LEFT: NODE STATUS CARDS
+    # ------------------------------------------------------------------------
     with col_nodes:
-        st.markdown("""
-            <div style="background:#FFFFFF;border-radius:20px;border:1px solid #ECECEC;padding:22px;box-shadow:0 2px 10px rgba(0,0,0,0.02);">
-                <h3 style="font-size:1rem;font-weight:800;color:#1C1C1E;margin:0 0 4px 0;">Node Telemetry</h3>
-                <p style="font-size:0.75rem;color:#8E8E93;margin:0 0 14px 0;">Live readings (simulated)</p>
-        """, unsafe_allow_html=True)
+        st.markdown("### Node Status & Telemetry")
 
         for node in GMN_NODES:
-            st.markdown(f"""
-                <div style="padding:12px 14px;background:#F9F9FB;border-radius:12px;border:1px solid #EBEBEB;margin-bottom:10px;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-                        <span style="font-size:0.9rem;font-weight:800;color:#1C1C1E;font-family:monospace;">{node['id']}</span>
-                        <span style="font-size:0.65rem;color:#34C759;background:#E8FAF0;padding:2px 8px;border-radius:9999px;font-weight:700;">● {node['status']}</span>
-                    </div>
-                    <span style="font-size:0.75rem;color:#636366;display:block;margin-bottom:8px;">{node['name']}</span>
-                    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center;">
-                        <div style="background:#FFFFFF;padding:6px 4px;border-radius:8px;border:1px solid #EBEBEB;">
-                            <span style="font-size:0.6rem;color:#8E8E93;display:block;">Temp</span>
-                            <b style="font-size:0.8rem;color:#FF9500;">{node['temp']}°C</b>
-                        </div>
-                        <div style="background:#FFFFFF;padding:6px 4px;border-radius:8px;border:1px solid #EBEBEB;">
-                            <span style="font-size:0.6rem;color:#8E8E93;display:block;">pH</span>
-                            <b style="font-size:0.8rem;color:#1C1C1E;">{node['ph']}</b>
-                        </div>
-                        <div style="background:#FFFFFF;padding:6px 4px;border-radius:8px;border:1px solid #EBEBEB;">
-                            <span style="font-size:0.6rem;color:#8E8E93;display:block;">EC</span>
-                            <b style="font-size:0.8rem;color:#1C1C1E;">{node['ec']}</b>
-                        </div>
-                        <div style="background:#FFFFFF;padding:6px 4px;border-radius:8px;border:1px solid #EBEBEB;">
-                            <span style="font-size:0.6rem;color:#8E8E93;display:block;">Batt</span>
-                            <b style="font-size:0.8rem;color:#34C759;">{node['battery']}%</b>
-                        </div>
-                    </div>
-                </div>
-            """, unsafe_allow_html=True)
-        st.markdown("</div>", unsafe_allow_html=True)
+            node_id = node.get("id", "GMN")
+            node_name = node.get("name", "Monitoring Node")
+            node_status = node.get("status", "Proposed Node")
 
-    # Trend Charts Row
-    st.markdown("<div style='margin-top:1.25rem'></div>", unsafe_allow_html=True)
-    dates = pd.date_range("2025-01-01", periods=12, freq="MS")
-    df_t = pd.DataFrame({
-        "Month": dates.strftime("%b"),
-        "Temperature (°C)": [66.2, 66.8, 67.4, 68.0, 68.4, 69.1, 70.2, 71.0, 69.8, 68.6, 67.9, 67.1],
-        "pH": [3.32, 3.30, 3.28, 3.26, 3.25, 3.21, 3.18, 3.15, 3.20, 3.24, 3.27, 3.31],
-        "EC (µS/cm)": [3750, 3780, 3810, 3830, 3840, 3890, 3940, 3980, 3910, 3850, 3800, 3760]
-    })
+            # Determine Pill Badge
+            if "online" in node_status.lower():
+                badge_html = '<span class="gmn-pill-online">● Online</span>'
+            else:
+                badge_html = '<span class="gmn-pill-proposed">● Proposed</span>'
 
-    c1, c2, c3 = st.columns(3, gap="medium")
-    for col, y_col, color, title in [
-        (c1, "Temperature (°C)", "#FF9500", "Temperature Trend"),
-        (c2, "pH", "#1C1C1E", "pH Level Trend"),
-        (c3, "EC (µS/cm)", "#34C759", "EC Trend"),
-    ]:
-        with col:
-            fig = px.line(df_t, x="Month", y=y_col, title=title, color_discrete_sequence=[color])
-            fig.update_traces(line_width=2.5)
-            fig.update_layout(
-                height=200, margin=dict(l=10, r=10, t=32, b=10),
-                paper_bgcolor="#FFFFFF", plot_bgcolor="#FFFFFF",
-                font=dict(family="Inter", size=10, color="#636366"),
-                title_font=dict(size=12, color="#1C1C1E", family="Inter"),
-                xaxis=dict(showgrid=False, title=""),
-                yaxis=dict(showgrid=True, gridcolor="#F2F2F7", title="")
-            )
-            st.markdown("""<div style="background:#FFFFFF;border-radius:20px;border:1px solid #ECECEC;padding:14px;box-shadow:0 2px 10px rgba(0,0,0,0.02);">""", unsafe_allow_html=True)
-            st.plotly_chart(fig, use_container_width=True)
-            st.markdown("</div>", unsafe_allow_html=True)
+            with st.container(border=True):
+                # Node Title & Status Badge
+                c_top_l, c_top_r = st.columns([3, 1])
+                with c_top_l:
+                    st.markdown(f"**{node_id}** · <span style='font-size:0.85rem; color:#475569;'>{node_name}</span>", unsafe_allow_html=True)
+                with c_top_r:
+                    st.markdown(f"<div style='text-align:right;'>{badge_html}</div>", unsafe_allow_html=True)
+
+                st.markdown("<div style='margin-bottom: 8px;'></div>", unsafe_allow_html=True)
+
+                # 4-Column Sensor Grid (Super Compact Metrics)
+                m1, m2, m3, m4 = st.columns(4)
+                with m1:
+                    st.markdown('<div class="gmn-metric-label">Soil Temp (0.5m)</div>', unsafe_allow_html=True)
+                    st.markdown(f'<div class="gmn-metric-val">{node.get("shallow_soil_temp", 68.4)} °C</div>', unsafe_allow_html=True)
+                    st.markdown('<div class="gmn-metric-label" style="margin-top:6px;">Air Temp</div>', unsafe_allow_html=True)
+                    st.markdown(f'<div class="gmn-metric-val">{node.get("air_temp", 29.6)} °C</div>', unsafe_allow_html=True)
+                    st.markdown('<div class="gmn-metric-label" style="margin-top:6px;">Soil Moisture</div>', unsafe_allow_html=True)
+                    st.markdown(f'<div class="gmn-metric-val">{node.get("soil_moisture", 42.5)} %</div>', unsafe_allow_html=True)
+                
+                with m2:
+                    st.markdown('<div class="gmn-metric-label">Soil Temp (1.0m)</div>', unsafe_allow_html=True)
+                    st.markdown(f'<div class="gmn-metric-val">{node.get("deep_soil_temp", 74.2)} °C</div>', unsafe_allow_html=True)
+                    st.markdown('<div class="gmn-metric-label" style="margin-top:6px;">Air Humidity</div>', unsafe_allow_html=True)
+                    st.markdown(f'<div class="gmn-metric-val">{node.get("air_humidity", 78.2)} %</div>', unsafe_allow_html=True)
+                    st.markdown('<div class="gmn-metric-label" style="margin-top:6px;">Fluid pH</div>', unsafe_allow_html=True)
+                    st.markdown(f'<div class="gmn-metric-val">{node.get("ph_level", 2.8)}</div>', unsafe_allow_html=True)
+
+                with m3:
+                    st.markdown('<div class="gmn-metric-label">EC Meter</div>', unsafe_allow_html=True)
+                    st.markdown(f'<div class="gmn-metric-val">{node.get("ec_meter", 3800)} µS</div>', unsafe_allow_html=True)
+                    st.markdown('<div class="gmn-metric-label" style="margin-top:6px;">H₂S Gas</div>', unsafe_allow_html=True)
+                    st.markdown(f'<div class="gmn-metric-val">{node.get("h2s_gas", 14.2)} ppm</div>', unsafe_allow_html=True)
+                    st.markdown('<div class="gmn-metric-label" style="margin-top:6px;">CO₂ Gas</div>', unsafe_allow_html=True)
+                    st.markdown(f'<div class="gmn-metric-val">{node.get("co2_gas", 850)} ppm</div>', unsafe_allow_html=True)
+
+                with m4:
+                    st.markdown('<div class="gmn-metric-label">Battery</div>', unsafe_allow_html=True)
+                    st.markdown(f'<div class="gmn-metric-val">{node.get("battery", 94)} %</div>', unsafe_allow_html=True)
+                    st.markdown('<div class="gmn-metric-label" style="margin-top:6px;">Telemetry</div>', unsafe_allow_html=True)
+                    st.markdown('<div class="gmn-metric-val" style="font-size:0.9rem !important;">LoRa / 4G</div>', unsafe_allow_html=True)
+                    st.markdown('<div class="gmn-metric-label" style="margin-top:6px;">Interval</div>', unsafe_allow_html=True)
+                    st.markdown('<div class="gmn-metric-val" style="font-size:0.9rem !important;">15 Min</div>', unsafe_allow_html=True)
+
+                # Bottom Metadata (Coordinates & Timestamp)
+                st.markdown("<hr style='margin: 10px 0 6px 0; border: none; border-top: 1px solid #F1F5F9;' />", unsafe_allow_html=True)
+                f1, f2 = st.columns(2)
+                with f1:
+                    st.caption(f"📍 **GNSS:** {node.get('lat', '--')}, {node.get('lng', '--')}")
+                with f2:
+                    st.caption(f"🕒 **Update:** {node.get('last_update', 'Simulated Stream')}")
+
+    # ------------------------------------------------------------------------
+    # RIGHT: CLEAN NETWORK MAP
+    # ------------------------------------------------------------------------
+    with col_map:
+        st.markdown("### Deployment Network Map")
+
+        m = create_base_map(center=[1.30, 124.85], zoom=10)
+
+        # Feature group for clean layer control
+        fg_nodes = folium.FeatureGroup(name="Proposed GMN Nodes")
+
+        for node in GMN_NODES:
+            node_id = node.get("id", "GMN")
+            node_name = node.get("name", "Monitoring Node")
+            node_status = node.get("status", "Proposed")
+            lat, lng = node.get("lat"), node.get("lng")
+
+            if lat is None or lng is None:
+                continue
+
+            if "online" in node_status.lower():
+                marker_color, fill_color = "#10B981", "#A7F3D0"
+            else:
+                marker_color, fill_color = "#2563EB", "#BFDBFE"
+
+            popup_html = f"""
+            <div style="font-family: sans-serif; font-size: 11px; width: 210px;">
+                <b style="font-size: 13px; color: #0F172A;">{node_id}</b> — {node_name}<br><br>
+                <b>Soil Temp (0.5m):</b> {node.get('shallow_soil_temp', 68.4)} °C<br>
+                <b>Soil Temp (1.0m):</b> {node.get('deep_soil_temp', 74.2)} °C<br>
+                <b>Soil Moisture:</b> {node.get('soil_moisture', 42.5)} %<br>
+                <b>Fluid pH:</b> {node.get('ph_level', 2.8)} | <b>EC:</b> {node.get('ec_meter', 3800)} µS<br>
+                <b>H₂S:</b> {node.get('h2s_gas', 14.2)} ppm | <b>CO₂:</b> {node.get('co2_gas', 850)} ppm
+            </div>
+            """
+
+            folium.CircleMarker(
+                location=[lat, lng],
+                radius=8,
+                color=marker_color,
+                fill=True,
+                fill_color=fill_color,
+                fill_opacity=0.9,
+                popup=folium.Popup(popup_html, max_width=240),
+                tooltip=f"{node_id} ({node_name})"
+            ).add_to(fg_nodes)
+
+        fg_nodes.add_to(m)
+        folium.LayerControl(collapsed=True).add_to(m)
+
+        st_folium(m, width="100%", height=510, key="gmn_network_map")
+
+    # ── CLEAN EXPANDABLE IOT ARCHITECTURE ──────────────────────────────────
+    st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
+
+    with st.expander("IoT Architecture & 11-Parameter Hardware Specification", expanded=False):
+        tab_sensors, tab_hw, tab_pipeline = st.tabs(["11-Parameter Suite", "Hardware Stack", "Data Pipeline"])
+
+        with tab_sensors:
+            sensor_data = {
+                "No": list(range(1, 12)),
+                "Parameter Measurement": [
+                    "Temperatur tanah dangkal (0.5m)",
+                    "Temperatur tanah lebih dalam (1.0m)",
+                    "Temperatur udara",
+                    "Kelembapan relatif udara",
+                    "Kelembapan tanah",
+                    "pH fluida geothermal",
+                    "Electrical Conductivity (EC)",
+                    "H₂S Gas Concentration",
+                    "CO₂ Gas Concentration",
+                    "Waktu pengukuran",
+                    "Koordinat node"
+                ],
+                "Sensor Hardware": [
+                    "PT100 RTD Probe + MAX31865",
+                    "PT100 RTD Probe + MAX31865",
+                    "Sensirion SHT31",
+                    "Sensirion SHT31",
+                    "DFRobot SEN0193 Capacitive Soil Moisture Sensor",
+                    "DFRobot Gravity Analog pH Sensor V2 / SEN0161-V2",
+                    "DFRobot Gravity Analog EC Meter K=1",
+                    "Winsen MQ-136",
+                    "Winsen MH-Z19B NDIR",
+                    "DS3231 RTC",
+                    "u-blox NEO-M8N GNSS"
+                ]
+            }
+            st.dataframe(pd.DataFrame(sensor_data), use_container_width=True, hide_index=True)
+
+        with tab_hw:
+            hw_col1, hw_col2, hw_col3 = st.columns(3)
+            with hw_col1:
+                st.markdown("**Processing & Core**\n- ESP32-WROOM-32 Dual Core MCU\n- ADS1115 16-Bit ADC\n- MAX31865 RTD Amplifiers")
+            with hw_col2:
+                st.markdown("**Telemetry & Power**\n- SX1276/SX1262 LoRa Transceiver\n- SIM7600G-H 4G Cellular Module\n- 20W Solar Panel + LiFePO4 Pack")
+            with hw_col3:
+                st.markdown("**Field Enclosure**\n- IP67 Industrial ABS Box\n- SS316 Thermowell Armored Probes\n- IP68 PTFE Gas Vent Caps")
+
+        with tab_pipeline:
+            st.info("**Data Flow:** Probes (11 Parameters) ➔ ESP32 Edge MCU ➔ LoRaWAN / 4G Gateway ➔ Cloud Broker (MQTT/InfluxDB) ➔ GEO-SMART Dashboard")
+
+
+if __name__ == "__main__":
+    render_monitoring()
