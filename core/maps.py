@@ -155,24 +155,50 @@ def add_geological_layers(
 
 
 def create_base_map(
-    center=[1.30, 124.85],
-    zoom=9,
-    tile_name="CartoDB Light",
+    center=[1.35, 124.85],
+    zoom=8,
+    tile_name=None,
     include_geology: bool = True
 ) -> folium.Map:
     """
-    Creates a clean, light basemap with scope set to Sulawesi Utara,
-    with lazy-loaded (show=False) Geology and Fault & Lineament FeatureGroups.
+    Creates a multi-basemap Folium Map (OpenStreetMap, Esri Topo, Esri Satellite, CartoDB Positron)
+    with scope set to North Sulawesi, along with lazy-loaded Geology and Structural FeatureGroups.
     """
     m = folium.Map(
         location=center,
         zoom_start=zoom,
         tiles=None
     )
+
+    # 1. OpenStreetMap (Standard Base Layer - Primary / Active)
     folium.TileLayer(
-        tiles="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+        tiles="https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+        attr="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors",
+        name="OpenStreetMap (Standard)",
+        control=True
+    ).add_to(m)
+
+    # 2. Esri World Topographic (Topography & Relief)
+    folium.TileLayer(
+        tiles="https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
+        attr="Tiles &copy; Esri &mdash; Esri, USGS, GIS Community",
+        name="Esri World Topographic",
+        control=True
+    ).add_to(m)
+
+    # 3. Esri World Imagery (Satellite Photo)
+    folium.TileLayer(
+        tiles="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        attr="Tiles &copy; Esri &mdash; Maxar, Earthstar Geographics",
+        name="Esri World Imagery (Satellite)",
+        control=True
+    ).add_to(m)
+
+    # 4. CartoDB Positron (Clean Light)
+    folium.TileLayer(
+        tiles="https://cartodb-basemaps-a.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png",
         attr="&copy; OpenStreetMap contributors &copy; CARTO",
-        name=tile_name,
+        name="CartoDB Positron (Light)",
         control=True
     ).add_to(m)
 
@@ -180,5 +206,6 @@ def create_base_map(
         add_geological_layers(m, show_lito=False, show_geostruk=False)
 
     return m
+
 
 

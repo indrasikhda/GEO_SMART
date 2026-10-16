@@ -157,7 +157,7 @@ def render_evidence():
     with col_map:
         st.markdown('<div class="data-card-header">Spatial Overlay</div>', unsafe_allow_html=True)
         
-        m = create_base_map(center=[1.30, 124.85], zoom=10, include_geology=False)
+        m = create_base_map(center=[1.35, 124.85], zoom=8, include_geology=False)
         
         # Add Geology / Lithology FeatureGroup
         show_lito = "Geology / Lithology" in selected_layers
@@ -191,6 +191,10 @@ def render_evidence():
         # Add manifestations if selected
         if "Geothermal Manifestations" in selected_layers:
             for manifest in MANIFESTATIONS:
+                name_val = manifest.get('name', 'Geothermal Point')
+                type_val = manifest.get('type', 'Manifestation')
+                temp_val = manifest.get('temp', '-')
+                ph_val = manifest.get('ph_level', manifest.get('ph', '-'))
                 folium.CircleMarker(
                     location=[manifest["lat"], manifest["lng"]],
                     radius=7,
@@ -198,8 +202,8 @@ def render_evidence():
                     fill=True,
                     fillColor="#FCA5A5",
                     fillOpacity=0.8,
-                    popup=f"<b>{manifest['name']}</b><br>Type: {manifest['type']}<br>Temp: {manifest['temp']}°C | pH: {manifest['ph']}",
-                    tooltip=manifest["name"]
+                    popup=f"<b>{name_val}</b><br>Type: {type_val}<br>Temp: {temp_val}°C | pH: {ph_val}",
+                    tooltip=name_val
                 ).add_to(m)
         
         folium.LayerControl().add_to(m)

@@ -94,7 +94,7 @@ def render_priority():
     with col_map:
         st.markdown('<div class="data-card-header">Spatial Distribution</div>', unsafe_allow_html=True)
         
-        m = create_base_map(center=[1.30, 124.85], zoom=10)
+        m = create_base_map(center=[1.35, 124.85], zoom=8)
         
         # Add zone markers
         priority_colors_map = {

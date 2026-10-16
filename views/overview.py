@@ -54,7 +54,7 @@ def render_overview():
         st.markdown('<div class="data-card-header">Study Area Overview</div>', unsafe_allow_html=True)
         
         # Manifestation locations - 5 documented thermal sites
-        m = create_base_map(center=[1.30, 124.85], zoom=10)
+        m = create_base_map(center=[1.35, 124.85], zoom=8)
         
         # Add manifestation markers
         for manifest in MANIFESTATIONS:

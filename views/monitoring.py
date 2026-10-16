@@ -157,7 +157,7 @@ def render_monitoring():
     with col_map:
         st.markdown("### Deployment Network Map")
 
-        m = create_base_map(center=[1.30, 124.85], zoom=10)
+        m = create_base_map(center=[1.35, 124.85], zoom=8)
 
         # Feature group for clean layer control
         fg_nodes = folium.FeatureGroup(name="Proposed GMN Nodes")
