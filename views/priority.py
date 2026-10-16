@@ -1,145 +1,142 @@
 import streamlit as st
 import folium
 from streamlit_folium import st_folium
-import pandas as pd
+import textwrap
 from core.io import PRIORITY_ZONES
 from core.maps import create_base_map
+from ui.components import page_header, kpi_card
 
 def render_priority():
-    # Priority Distribution Summary
-    st.markdown('<div class="data-card-header">Priority Zone Classification</div>', unsafe_allow_html=True)
-    
+    # ── Header Halaman Ringkas (Anggaran Teks) ──────────────────────────────
+    page_header(
+        title="Zona Prioritas",
+        subtitle="Peringkat dan zonasi prospek eksplorasi berdasarkan Geothermal Prospectivity Index (GPI).",
+        badge_text="● 12 Kandidat Zona",
+        badge_tooltip="Klasifikasi multikriteria berdasarkan skor GPI dan evaluasi kendala spasial"
+    )
+
     high = sum(1 for z in PRIORITY_ZONES if z['priority'] == 'High')
     moderate = sum(1 for z in PRIORITY_ZONES if z['priority'] == 'Moderate')
     low = sum(1 for z in PRIORITY_ZONES if z['priority'] == 'Low')
-    
+
+    # ── Baris KPI Bento (Maksimal 4 kartu) ──────────────────────────────────
     k1, k2, k3, k4 = st.columns(4)
-    
     with k1:
-        st.metric(label="Total Zones", value=len(PRIORITY_ZONES), delta="Candidates")
-    
+        kpi_card("Total Kandidat", f"{len(PRIORITY_ZONES)}", subtext="Wilayah prospek")
     with k2:
-        st.metric(label="High Priority", value=high, delta="GPI ≥0.75")
-    
+        kpi_card("Prioritas Tinggi", f"{high}", trend="GPI ≥ 0.75", trend_type="success")
     with k3:
-        st.metric(label="Moderate", value=moderate, delta="GPI 0.60-0.74")
-    
+        kpi_card("Prioritas Sedang", f"{moderate}", trend="0.60–0.74", trend_type="warning")
     with k4:
-        st.metric(label="Low Priority", value=low, delta="GPI <0.60")
-    
+        kpi_card("Prioritas Rendah", f"{low}", subtext="GPI < 0.60")
+
     st.write("")
-    
-    # Demo Data Notice
-    st.markdown("""
-        <div class="data-card" style="background:#FEF3C7;border-color:#FDE68A;">
-            <div style="display:flex;align-items:center;gap:0.75rem;">
-                <span class="status-badge badge-warning">DEMO DATA</span>
-                <div style="font-size:0.85rem;color:#92400E;">
-                    Priority zones demonstrate workflow. Full GPI raster generation requires complete geological dataset.
-                </div>
-            </div>
-        </div>
-    """, unsafe_allow_html=True)
-    
-    st.write("")
-    
-    # Main Layout
-    col_table, col_map = st.columns([5, 7], gap="large")
-    
+
+    # ── Layout Konten: Ranking Bento (5) + Peta Bento (7) ───────────────────
+    col_table, col_map = st.columns([5, 7], gap="medium")
+
     with col_table:
-        st.markdown('<div class="data-card-header">Zone Ranking</div>', unsafe_allow_html=True)
-        
-        # Sort by GPI descending
+        st.markdown(textwrap.dedent("""
+<div class="bento-card">
+<div class="bento-card-header">
+<div>
+<div class="bento-card-title">Peringkat Zona Eksplorasi</div>
+<div class="bento-card-sub">Urutan kandidat berdasarkan skor GPI tertinggi</div>
+</div>
+</div>
+""").strip(), unsafe_allow_html=True)
+
         sorted_zones = sorted(PRIORITY_ZONES, key=lambda x: x['gpi'], reverse=True)
-        
+
         for zone in sorted_zones:
-            priority_colors = {
-                'High': ('success', '#ECFDF5'),
-                'Moderate': ('warning', '#FFFBEB'),
-                'Low': ('neutral', '#F8FAFC')
-            }
-            badge_type, bg_color = priority_colors.get(zone['priority'], ('neutral', '#F8FAFC'))
-            
-            st.markdown(f"""
-                <div style="padding:0.75rem;margin-bottom:0.5rem;border:1px solid #E2E8F0;border-radius:8px;background:{bg_color};">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
-                        <span style="font-size:0.9rem;font-weight:700;color:#0F172A;">{zone['zone']}</span>
-                        <span class="status-badge badge-{badge_type}">{zone['priority']}</span>
-                    </div>
-                    <div style="display:flex;gap:1rem;font-size:0.75rem;color:#64748B;">
-                        <div><b>GPI:</b> {zone['gpi']}</div>
-                        <div><b>Area:</b> {zone['area']} km²</div>
-                    </div>
-                    {f'<div style="margin-top:0.5rem;font-size:0.7rem;color:#DC2626;">⚠ {zone["constraint"]}</div>' if zone.get('constraint') else ''}
-                </div>
-            """, unsafe_allow_html=True)
-        
-        st.write("")
-        
-        # Classification Criteria
-        with st.expander("Classification Criteria", expanded=False):
-            st.markdown("""
-                **Priority Thresholds:**
-                - **High:** GPI ≥ 0.75 + No major constraints
-                - **Moderate:** GPI 0.60-0.74 OR constraints present
-                - **Low:** GPI < 0.60
-                
-                **Constraint Types:**
-                - Environmental reserves / protected areas
-                - Urban buffer zones
-                - Volcanic crater buffers
-                - Infrastructure corridors
-            """)
-    
+            p_val = zone['priority']
+            badge_bg = "#DCFCE7" if p_val == "High" else ("#FEF3C7" if p_val == "Moderate" else "#F1F5F9")
+            badge_color = "#15803D" if p_val == "High" else ("#B45309" if p_val == "Moderate" else "#64748B")
+            p_label = "TINGGI" if p_val == "High" else ("SEDANG" if p_val == "Moderate" else "RENDAH")
+            constraint_html = f'<div style="margin-top:0.3rem;font-size:0.68rem;color:#DC2626;font-weight:600;">⚠ {zone["constraint"]}</div>' if zone.get('constraint') else ''
+
+            st.markdown(textwrap.dedent(f"""
+<div style="padding:0.6rem 0.8rem;margin-bottom:0.4rem;border:1px solid #E2E8F0;border-radius:10px;background:#FFFFFF;">
+<div style="display:flex;justify-content:space-between;align-items:center;">
+<span style="font-size:0.86rem;font-weight:700;color:#0F172A;">{zone['zone']}</span>
+<span style="font-size:0.62rem;font-weight:700;padding:0.12rem 0.5rem;border-radius:9999px;background:{badge_bg};color:{badge_color};">{p_label}</span>
+</div>
+<div style="display:flex;gap:1.25rem;font-size:0.72rem;color:#64748B;margin-top:0.25rem;">
+<div><b>GPI:</b> {zone['gpi']}</div>
+<div><b>Luas:</b> {zone['area']} km²</div>
+</div>
+{constraint_html}
+</div>
+""").strip(), unsafe_allow_html=True)
+
+        st.markdown('</div>', unsafe_allow_html=True)
+
     with col_map:
-        st.markdown('<div class="data-card-header">Spatial Distribution</div>', unsafe_allow_html=True)
-        
+        st.markdown(textwrap.dedent("""
+<div class="bento-card" style="padding-bottom:1rem;">
+<div class="bento-card-header">
+<div>
+<div class="bento-card-title">Peta Sebaran Zona Prioritas</div>
+<div class="bento-card-sub">Distribusi spasial titik kandidat eksplorasi di Sulawesi Utara</div>
+</div>
+</div>
+""").strip(), unsafe_allow_html=True)
+
         m = create_base_map(center=[1.35, 124.85], zoom=8)
-        
-        # Add zone markers
+
         priority_colors_map = {
-            'High': '#059669',
+            'High': '#16A34A',
             'Moderate': '#D97706',
             'Low': '#64748B'
         }
-        
+
         for zone in PRIORITY_ZONES:
             color = priority_colors_map.get(zone['priority'], '#64748B')
-            
             folium.CircleMarker(
                 location=[zone['lat'], zone['lng']],
                 radius=8,
                 color=color,
                 fill=True,
                 fillColor=color,
-                fillOpacity=0.7,
+                fillOpacity=0.8,
+                weight=2,
                 popup=f"""
                     <b>{zone['zone']}</b><br>
-                    Priority: {zone['priority']}<br>
-                    GPI: {zone['gpi']}<br>
-                    Area: {zone['area']} km²
+                    Prioritas: {zone['priority']}<br>
+                    Skor GPI: {zone['gpi']}<br>
+                    Luas: {zone['area']} km²
                     {f"<br><span style='color:#DC2626;'>⚠ {zone['constraint']}</span>" if zone.get('constraint') else ''}
                 """,
-                tooltip=f"{zone['zone']} - {zone['priority']}"
+                tooltip=f"{zone['zone']} ({zone['priority']})"
             ).add_to(m)
-        
+
         folium.LayerControl().add_to(m)
-        st_folium(m, width="100%", height=600, key="priority_zones_map")
-        
-        # Legend
+        st_folium(m, width="100%", height=480, key="priority_zones_map")
+
+        # Legenda ringkas
+        st.markdown(textwrap.dedent("""
+<div style="display:flex;gap:1.5rem;margin-top:0.6rem;padding:0.25rem 0.5rem;font-size:0.75rem;">
+<div style="display:flex;align-items:center;gap:0.4rem;">
+<div style="width:10px;height:10px;border-radius:50%;background:#16A34A;"></div>
+<span style="color:#475569;font-weight:600;">Prioritas Tinggi (6)</span>
+</div>
+<div style="display:flex;align-items:center;gap:0.4rem;">
+<div style="width:10px;height:10px;border-radius:50%;background:#D97706;"></div>
+<span style="color:#475569;font-weight:600;">Prioritas Sedang (5)</span>
+</div>
+<div style="display:flex;align-items:center;gap:0.4rem;">
+<div style="width:10px;height:10px;border-radius:50%;background:#64748B;"></div>
+<span style="color:#475569;font-weight:600;">Prioritas Rendah (1)</span>
+</div>
+</div>
+</div>
+""").strip(), unsafe_allow_html=True)
+
+    # ── Expander Kriteria Klasifikasi ────────────────────────────────────────
+    with st.expander("ℹ️ Kriteria & Ambang Batas Klasifikasi GPI", expanded=False):
         st.markdown("""
-            <div style="display:flex;gap:1.5rem;margin-top:0.75rem;font-size:0.8rem;">
-                <div style="display:flex;align-items:center;gap:0.5rem;">
-                    <div style="width:12px;height:12px;border-radius:50%;background:#059669;"></div>
-                    <span class="status-badge badge-success">High Priority</span>
-                </div>
-                <div style="display:flex;align-items:center;gap:0.5rem;">
-                    <div style="width:12px;height:12px;border-radius:50%;background:#D97706;"></div>
-                    <span class="status-badge badge-warning">Moderate</span>
-                </div>
-                <div style="display:flex;align-items:center;gap:0.5rem;">
-                    <div style="width:12px;height:12px;border-radius:50%;background:#64748B;"></div>
-                    <span class="status-badge badge-neutral">Low Priority</span>
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
+            - **Prioritas Tinggi:** Skor GPI &ge; 0.75 tanpa kendala lingkungan kritis.
+            - **Prioritas Sedang:** Skor GPI 0.60 &ndash; 0.74, atau zona dengan kendala buffer yang memerlukan mitigasi.
+            - **Prioritas Rendah:** Skor GPI &lt; 0.60.
+            - **Evaluasi Kendala:** Buffer cagar alam / hutan lindung, kawasan pemukiman, radius kawah aktif, dan koridor infrastruktur.
+        """)

@@ -13,6 +13,8 @@ from core.fahp import (
 
 from core.raster import get_raster_stats_and_overlay
 from core.maps import create_base_map
+import textwrap
+from ui.components import page_header, kpi_card
 
 
 # ============================================================
@@ -101,75 +103,29 @@ def render_fahp_gpi():
     weights = fahp_res["weights"]
 
     # ========================================================
-    # HEADER
+    # HEADER & BENTO KPIS
     # ========================================================
 
-    st.markdown(
-        '<div class="data-card-header">'
-        'FAHP Engine Status'
-        '</div>',
-        unsafe_allow_html=True,
+    page_header(
+        title="FAHP & GPI",
+        subtitle="Pembobotan multikriteria Fuzzy AHP dan perhitungan Geothermal Prospectivity Index.",
+        badge_text="● Model Konsisten" if fahp_res["is_consistent"] else "● Perlu Review",
+        badge_tooltip="Consistency Ratio (CR) < 0.10 memenuhi kaidah konsistensi Saaty"
     )
 
-    k1, k2, k3, k4, k5 = st.columns(5)
-
+    k1, k2, k3, k4 = st.columns(4)
     with k1:
-        st.metric(
-            "Criteria",
-            "5",
-            "Current model",
-        )
-
+        kpi_card("Jumlah Kriteria", f"{len(CRITERIA_LIST)}", subtext="Parameter spasial")
     with k2:
-        st.metric(
-            "Method",
-            "Fuzzy-AHP",
-            "Preliminary",
-        )
-
+        trend_status = "Konsisten (CR < 0.1)" if fahp_res["is_consistent"] else "Perlu Review"
+        trend_type = "success" if fahp_res["is_consistent"] else "warning"
+        kpi_card("Rasio Konsistensi", f"{fahp_res['CR']:.3f}", trend=trend_status, trend_type=trend_type)
     with k3:
-        st.metric(
-            "CR",
-            f"{fahp_res['CR']:.3f}",
-            (
-                "Acceptable"
-                if fahp_res["is_consistent"]
-                else "Review"
-            ),
-        )
-
+        kpi_card("Total Bobot", f"{sum(weights):.2f}", subtext="Normalisasi vektor")
     with k4:
-        st.metric(
-            "Weight Sum",
-            f"{sum(weights):.3f}",
-            "Normalized",
-        )
-
-    with k5:
-        st.metric(
-            "Source",
-            "Şener 2021",
-            "Literature",
-        )
+        kpi_card("Metode Referensi", "Fuzzy-AHP", subtext="Şener & Şener (2021)")
 
     st.write("")
-
-    # ========================================================
-    # LITERATURE NOTICE
-    # ========================================================
-
-    st.info(
-        "Preliminary criterion weights are "
-        "literature-informed based on Şener & Şener (2021). "
-        "The literature-derived framework is transferred "
-        "as an initial reference for the Sulawesi Utara prototype. "
-        "Local expert validation is required before "
-        "field application."
-    )
-
-    # ========================================================
-    # MATRIX + WEIGHTS
-    # ========================================================
 
     col_matrix, col_weights = st.columns(
         [6, 6],
