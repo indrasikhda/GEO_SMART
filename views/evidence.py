@@ -1,259 +1,209 @@
 import streamlit as st
 import folium
 from streamlit_folium import st_folium
-import textwrap
+
 from core.io import MANIFESTATIONS
 from core.maps import create_base_map, add_geological_layers
-from core.raster import get_raster_stats_and_overlay
-from ui.components import page_header, kpi_card
+from core.data import DATA_SOURCES_INVENTORY, CURRENT_FAHP_CRITERIA
+from ui.components import page_header, kpi_card, card_header, badge
 
+# Konstanta/helper dipakai bersama halaman lain agar konsisten
+from views.overview import CRITERIA_SOURCE, ID_NAMES
+from views.remote_sensing import _load_layer, _legend_html
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# Halaman: Bukti Multi-Sumber
+# Pola: header → 4 KPI → [inventaris lapisan 5 | peta overlay 7] → expander
+# Status lapisan diambil dari core/data.py (DATA_SOURCES_INVENTORY).
+# ════════════════════════════════════════════════════════════════════════════
+
+# "inv" = nama entri di DATA_SOURCES_INVENTORY; None = belum ada di inventaris (dianggap pending)
 EVIDENCE_LAYERS = [
-    {
-        "name": "Land Surface Temperature",
-        "type": "Raster",
-        "status": "Connected",
-        "source": "Landsat 8/9 TIRS",
-        "badge": "success"
-    },
-    {
-        "name": "NDVI Vegetation Index",
-        "type": "Raster",
-        "status": "Connected",
-        "source": "Sentinel-2 MSI",
-        "badge": "success"
-    },
-    {
-        "name": "Geothermal Manifestations",
-        "type": "Point",
-        "status": "Connected",
-        "source": "Field Survey",
-        "badge": "success"
-    },
-    {
-        "name": "Geology / Lithology",
-        "type": "Polygon",
-        "status": "Connected",
-        "source": "Regional Geological Map (1:100k)",
-        "badge": "success"
-    },
-    {
-        "name": "Fault & Lineament",
-        "type": "Line",
-        "status": "Connected",
-        "source": "Structural Geology (1:100k)",
-        "badge": "success"
-    },
-    {
-        "name": "Lineament Density",
-        "type": "Raster",
-        "status": "Pending",
-        "source": "DEM Analysis",
-        "badge": "neutral"
-    },
-    {
-        "name": "Hydrothermal Alteration",
-        "type": "Polygon",
-        "status": "Pending",
-        "source": "ASTER/Sentinel-2",
-        "badge": "neutral"
-    },
-    {
-        "name": "Micro-Seismicity",
-        "type": "Point",
-        "status": "Pending",
-        "source": "Seismic Network",
-        "badge": "neutral"
-    }
+    {"id": "lst", "name": "Suhu Permukaan (LST)", "type": "Raster",
+     "source": "Landsat 8/9 TIRS", "inv": "Land Surface Temperature (LST 2025)"},
+    {"id": "ndvi", "name": "NDVI (Vegetasi)", "type": "Raster",
+     "source": "Sentinel-2 MSI", "inv": "Normalized Difference Vegetation Index (NDVI 2025)"},
+    {"id": "manifest", "name": "Manifestasi Panas Bumi", "type": "Titik",
+     "source": "Survei lapangan", "inv": "Geothermal Manifestation Points"},
+    {"id": "geology", "name": "Geologi / Litologi", "type": "Poligon",
+     "source": "Peta geologi regional (1:100k)", "inv": "Geology / Lithological Units"},
+    {"id": "fault", "name": "Sesar & Kelurusan", "type": "Garis",
+     "source": "Geologi struktur (1:100k)", "inv": "Fault & Lineament Structures"},
+    {"id": "lineament_density", "name": "Densitas Kelurusan", "type": "Raster",
+     "source": "Analisis DEM", "inv": None},
+    {"id": "alteration", "name": "Alterasi Hidrotermal", "type": "Poligon",
+     "source": "ASTER/Sentinel-2", "inv": "Hydrothermal Alteration Zones"},
+    {"id": "microseismic", "name": "Mikro-Seismisitas", "type": "Titik",
+     "source": "Jaringan seismik", "inv": None},
 ]
 
+DEFAULT_ON = {"lst", "ndvi", "manifest"}
+MAP_HEIGHT = 420
+
+
 def render_evidence():
-    # ── Header Halaman Ringkas (Anggaran Teks) ──────────────────────────────
+    # ── Status lapisan dari core/data.py ─────────────────────────────────────
+    src_status = {d["Data Source"]: d["Status"] for d in DATA_SOURCES_INVENTORY}
+    for layer in EVIDENCE_LAYERS:
+        layer["connected"] = src_status.get(layer["inv"]) == "REAL" if layer["inv"] else False
+
+    total = len(EVIDENCE_LAYERS)
+    connected = sum(1 for l in EVIDENCE_LAYERS if l["connected"])
+    pending_layers = [l["name"] for l in EVIDENCE_LAYERS if not l["connected"]]
+    pct = connected / total * 100 if total else 0.0
+
+    crit_ids = [c["id"] for c in CURRENT_FAHP_CRITERIA]
+    crit_pending = [
+        ID_NAMES.get(cid, cid) for cid in crit_ids
+        if src_status.get(CRITERIA_SOURCE.get(cid, "")) != "REAL"
+    ]
+    crit_ready = len(crit_ids) - len(crit_pending)
+
+    # ── Header ───────────────────────────────────────────────────────────────
     page_header(
         title="Bukti Multi-Sumber",
-        subtitle="Integrasi lapisan spasial geologi, sesar, manifestasi, dan penginderaan jauh.",
-        badge_text="● 5 dari 8 Terhubung",
-        badge_tooltip="5 lapisan data spasial aktif siap di-overlay"
+        subtitle="Lapisan spasial geologi, sesar, manifestasi, dan penginderaan jauh.",
+        badge_text=f"● {connected} dari {total} Terhubung",
+        badge_tooltip=f"{connected} lapisan data spasial aktif dan siap di-overlay.",
     )
 
-    connected = sum(1 for layer in EVIDENCE_LAYERS if layer["status"] == "Connected")
-    pending = len(EVIDENCE_LAYERS) - connected
-
-    # ── Baris KPI Bento (Maksimal 4 kartu) ──────────────────────────────────
+    # ── KPI ──────────────────────────────────────────────────────────────────
     k1, k2, k3, k4 = st.columns(4)
     with k1:
-        kpi_card("Total Lapisan", f"{len(EVIDENCE_LAYERS)}", subtext="Kriteria multikriteria")
+        kpi_card("Total Lapisan", str(total), subtext="Lapisan bukti spasial")
     with k2:
-        kpi_card("Lapisan Terhubung", f"{connected}", trend=f"{(connected/len(EVIDENCE_LAYERS)*100):.1f}%", trend_type="success")
+        kpi_card("Lapisan Terhubung", str(connected),
+                 trend=f"{pct:.1f}%", trend_type="success")
     with k3:
-        kpi_card("Dalam Antrean", f"{pending}", subtext="Integrasi lanjutan")
+        shown = ", ".join(pending_layers[:2])
+        extra = f" +{len(pending_layers) - 2}" if len(pending_layers) > 2 else ""
+        kpi_card("Dalam Antrean", str(len(pending_layers)),
+                 subtext=(shown + extra) if pending_layers else "Tidak ada")
     with k4:
-        kpi_card("Format Data", "3", subtext="GeoTIFF, GeoJSON, Tabular")
+        kpi_card("Kriteria GPI Siap", f"{crit_ready}/{len(crit_ids)}",
+                 subtext=(f"{', '.join(crit_pending)} menunggu" if crit_pending
+                          else "Semua kriteria tersedia"))
 
     st.write("")
 
-    # ── Layout Konten: Inventaris Lapisan (5) + Peta Overlay (7) ────────────
     col_layers, col_map = st.columns([5, 7], gap="medium")
 
+    # ── Kartu inventaris: checklist lapisan ──────────────────────────────────
+    selected = set()
     with col_layers:
-        st.markdown(textwrap.dedent("""
-<div class="bento-card">
-<div class="bento-card-header">
-<div>
-<div class="bento-card-title">Inventaris Lapisan Spasial</div>
-<div class="bento-card-sub">Pilih lapisan aktif untuk ditampilkan pada peta</div>
-</div>
-</div>
-""").strip(), unsafe_allow_html=True)
+        with st.container(key="card_layers"):
+            card_header("Inventaris Lapisan", "Pilih lapisan aktif untuk ditampilkan di peta")
 
-        selected_layers = []
-        for layer in EVIDENCE_LAYERS:
-            is_available = layer["status"] == "Connected"
-            col_check, col_info = st.columns([1, 11])
+            for layer in EVIDENCE_LAYERS:
+                c_chk, c_info = st.columns([1, 9], gap="small", vertical_alignment="center")
+                with c_chk:
+                    if layer["connected"]:
+                        if st.checkbox(
+                            layer["name"],
+                            value=layer["id"] in DEFAULT_ON,
+                            key=f"layer_{layer['id']}",
+                            label_visibility="collapsed",
+                        ):
+                            selected.add(layer["id"])
+                    else:
+                        st.checkbox(
+                            layer["name"],
+                            value=False,
+                            disabled=True,
+                            key=f"layer_{layer['id']}",
+                            label_visibility="collapsed",
+                        )
+                with c_info:
+                    name_color = "#0F172A" if layer["connected"] else "#94A3B8"
+                    status_badge = badge("Aktif", "success") if layer["connected"] else badge("Pending", "neutral")
+                    st.markdown(
+                        '<div style="display:flex;justify-content:space-between;align-items:center;'
+                        'gap:0.5rem;padding:0.35rem 0;border-bottom:1px solid #F1F5F9;">'
+                        '<div>'
+                        f'<div style="font-size:0.82rem;font-weight:600;color:{name_color};">{layer["name"]}</div>'
+                        f'<div style="font-size:0.7rem;color:#64748B;">{layer["type"]} · {layer["source"]}</div>'
+                        '</div>'
+                        f'{status_badge}'
+                        '</div>',
+                        unsafe_allow_html=True,
+                    )
 
-            with col_check:
-                if is_available:
-                    default_checked = layer["name"] in ["Land Surface Temperature", "NDVI Vegetation Index", "Geothermal Manifestations"]
-                    checked = st.checkbox("", value=default_checked, key=f"layer_{layer['name']}", label_visibility="collapsed")
-                    if checked:
-                        selected_layers.append(layer["name"])
-                else:
-                    st.markdown('<div style="padding:0.25rem;"></div>', unsafe_allow_html=True)
+            st.markdown(
+                '<div style="margin-top:0.4rem;">'
+                '<div style="display:flex;justify-content:space-between;font-size:0.75rem;'
+                'color:#475569;font-weight:600;margin-bottom:0.3rem;">'
+                f'<span>Kemajuan integrasi</span><span>{connected}/{total} · {pct:.1f}%</span></div>'
+                '<div style="height:6px;background:#E2E8F0;border-radius:9999px;overflow:hidden;">'
+                f'<div style="width:{pct:.1f}%;height:100%;'
+                'background:linear-gradient(90deg,#22C55E,#16A34A);"></div></div></div>',
+                unsafe_allow_html=True,
+            )
 
-            with col_info:
-                badge_bg = "#DCFCE7" if is_available else "#F1F5F9"
-                badge_color = "#15803D" if is_available else "#64748B"
-                badge_txt = "AKTIF" if is_available else "PENDING"
-                name_color = "#0F172A" if is_available else "#94A3B8"
-                st.markdown(textwrap.dedent(f"""
-<div style="padding:0.45rem 0.65rem;margin-bottom:0.4rem;border:1px solid #E2E8F0;border-radius:10px;background:{'#F8FAFC' if not is_available else '#FFFFFF'};">
-<div style="display:flex;justify-content:space-between;align-items:center;">
-<span style="font-size:0.8rem;font-weight:600;color:{name_color};">{layer['name']}</span>
-<span style="font-size:0.62rem;font-weight:700;padding:0.12rem 0.45rem;border-radius:9999px;background:{badge_bg};color:{badge_color};">{badge_txt}</span>
-</div>
-<div style="font-size:0.68rem;color:#64748B;margin-top:0.15rem;">
-Tipe: {layer['type']} &bull; Sumber: {layer['source']}
-</div>
-</div>
-""").strip(), unsafe_allow_html=True)
-
-        st.markdown(textwrap.dedent("""
-<div style="padding:0.65rem 0.85rem;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;margin-top:0.6rem;font-size:0.75rem;color:#475569;">
-<div style="font-weight:700;color:#0F172A;margin-bottom:0.25rem;">Kemajuan Integrasi: 62.5%</div>
-<div style="width:100%;height:6px;background:#E2E8F0;border-radius:9999px;overflow:hidden;">
-<div style="width:62.5%;height:100%;background:linear-gradient(90deg,#22C55E,#16A34A);"></div>
-</div>
-</div>
-</div>
-""").strip(), unsafe_allow_html=True)
-
+    # ── Kartu peta overlay ───────────────────────────────────────────────────
     with col_map:
-        st.markdown(textwrap.dedent("""
-<div class="bento-card" style="padding-bottom:1rem;">
-<div class="bento-card-header">
-<div>
-<div class="bento-card-title">Peta Integrasi Spasial (Overlay)</div>
-<div class="bento-card-sub">Kombinasi layer terpilih untuk delineasi prospek panas bumi</div>
-</div>
-</div>
-""").strip(), unsafe_allow_html=True)
+        with st.container(key="card_map"):
+            card_header("Peta Overlay Spasial", "Kombinasi lapisan terpilih untuk delineasi prospek")
 
-        m = create_base_map(center=[1.35, 124.85], zoom=8, include_geology=False)
+            m = create_base_map(center=[1.35, 124.85], zoom=8, include_geology=False)
+            add_geological_layers(
+                m,
+                show_lito="geology" in selected,
+                show_geostruk="fault" in selected,
+            )
 
-        show_lito = "Geology / Lithology" in selected_layers
-        show_geostruk = "Fault & Lineament" in selected_layers
-        add_geological_layers(m, show_lito=show_lito, show_geostruk=show_geostruk)
+            layer_data = {}
+            for lid, label in (("lst", "LST"), ("ndvi", "NDVI")):
+                if lid in selected:
+                    data = _load_layer(lid)
+                    layer_data[lid] = data
+                    if data.get("png_path") and data.get("bounds"):
+                        folium.raster_layers.ImageOverlay(
+                            image=data["png_path"],
+                            bounds=data["bounds"],
+                            opacity=0.65,
+                            name=label,
+                        ).add_to(m)
 
-        lst_overlay = None
-        if "Land Surface Temperature" in selected_layers:
-            lst_overlay = get_raster_stats_and_overlay("lst")
-            if lst_overlay.get("png_path") and lst_overlay.get("bounds"):
-                folium.raster_layers.ImageOverlay(
-                    image=lst_overlay["png_path"],
-                    bounds=lst_overlay["bounds"],
-                    opacity=0.65,
-                    name="LST"
-                ).add_to(m)
+            if "manifest" in selected:
+                for mf in MANIFESTATIONS:
+                    name_val = mf.get("name", "Titik Manifestasi")
+                    folium.CircleMarker(
+                        location=[mf["lat"], mf["lng"]],
+                        radius=7,
+                        color="#DC2626",
+                        fill=True,
+                        fillColor="#EF4444",
+                        fillOpacity=0.85,
+                        weight=1.5,
+                        popup=(f"<b>{name_val}</b><br>Tipe: {mf.get('type', 'Manifestasi')}"
+                               f"<br>Suhu: {mf.get('temp', '-')} °C"),
+                        tooltip=name_val,
+                    ).add_to(m)
 
-        ndvi_overlay = None
-        if "NDVI Vegetation Index" in selected_layers:
-            ndvi_overlay = get_raster_stats_and_overlay("ndvi")
-            if ndvi_overlay.get("png_path") and ndvi_overlay.get("bounds"):
-                folium.raster_layers.ImageOverlay(
-                    image=ndvi_overlay["png_path"],
-                    bounds=ndvi_overlay["bounds"],
-                    opacity=0.65,
-                    name="NDVI"
-                ).add_to(m)
+            folium.LayerControl().add_to(m)
+            st_folium(
+                m,
+                width="100%",
+                height=MAP_HEIGHT,
+                key="evidence_overlay_map",
+                returned_objects=[],
+            )
 
-        if "Geothermal Manifestations" in selected_layers:
-            for manifest in MANIFESTATIONS:
-                name_val = manifest.get('name', 'Titik Manifestasi')
-                type_val = manifest.get('type', 'Manifestasi')
-                temp_val = manifest.get('temp', '-')
-                ph_val = manifest.get('ph_level', manifest.get('ph', '-'))
-                folium.CircleMarker(
-                    location=[manifest["lat"], manifest["lng"]],
-                    radius=7,
-                    color="#DC2626",
-                    fill=True,
-                    fillColor="#EF4444",
-                    fillOpacity=0.85,
-                    weight=1.5,
-                    popup=f"<b>{name_val}</b><br>Tipe: {type_val}<br>Suhu: {temp_val}°C | pH: {ph_val}",
-                    tooltip=name_val
-                ).add_to(m)
+            for lid in ("lst", "ndvi"):
+                data = layer_data.get(lid)
+                if data and data.get("min") is not None:
+                    st.markdown(
+                        f'<div style="margin-top:0.4rem;">{_legend_html(lid, data)}</div>',
+                        unsafe_allow_html=True,
+                    )
 
-        folium.LayerControl().add_to(m)
-        st_folium(m, width="100%", height=440, key="evidence_overlay_map")
-
-        has_lst = "Land Surface Temperature" in selected_layers and lst_overlay
-        has_ndvi = "NDVI Vegetation Index" in selected_layers and ndvi_overlay
-
-        if has_lst or has_ndvi:
-            leg_col1, leg_col2 = st.columns(2 if (has_lst and has_ndvi) else 1)
-
-            if has_lst:
-                target_col = leg_col1 if (has_lst and has_ndvi) else st
-                with target_col:
-                    st.markdown(textwrap.dedent(f"""
-<div style="padding:0.5rem 0.75rem;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;margin-top:0.5rem;">
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.2rem;">
-<span style="font-size:0.72rem;font-weight:700;color:#0F172A;">🌡️ LST Thermal Gradient</span>
-<span style="font-size:0.65rem;font-weight:700;color:#DC2626;">Hotspot</span>
-</div>
-<div style="height:8px;border-radius:4px;background:linear-gradient(90deg, #0369A1 0%, #38BDF8 35%, #FEF08A 55%, #F59E0B 75%, #DC2626 90%, #7F1D1D 100%);"></div>
-<div style="display:flex;justify-content:space-between;font-size:0.68rem;color:#64748B;font-weight:600;margin-top:0.2rem;">
-<span>{lst_overlay['min']:.1f}°C</span>
-<span>Rata-Rata: {lst_overlay['mean']:.1f}°C</span>
-<span style="color:#DC2626;">{lst_overlay['max']:.1f}°C</span>
-</div>
-</div>
-""").strip(), unsafe_allow_html=True)
-
-            if has_ndvi:
-                target_col = leg_col2 if (has_lst and has_ndvi) else st
-                with target_col:
-                    st.markdown(textwrap.dedent(f"""
-<div style="padding:0.5rem 0.75rem;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;margin-top:0.5rem;">
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.2rem;">
-<span style="font-size:0.72rem;font-weight:700;color:#0F172A;">🌿 NDVI Kerapatan Kanopi</span>
-<span style="font-size:0.65rem;font-weight:700;color:#047857;">Lebat</span>
-</div>
-<div style="height:8px;border-radius:4px;background:linear-gradient(90deg, #92400E 0%, #D97706 20%, #FACC15 40%, #4ADE80 65%, #16A34A 85%, #064E3B 100%);"></div>
-<div style="display:flex;justify-content:space-between;font-size:0.68rem;color:#64748B;font-weight:600;margin-top:0.2rem;">
-<span>{ndvi_overlay['min']:.2f}</span>
-<span>Rata-Rata: {ndvi_overlay['mean']:.2f}</span>
-<span style="color:#047857;">{ndvi_overlay['max']:.2f}</span>
-</div>
-</div>
-""").strip(), unsafe_allow_html=True)
-
-        st.markdown('</div>', unsafe_allow_html=True)
-
-    # ── Expander Informasi Data ─────────────────────────────────────────────
-    with st.expander("ℹ️ Detail Rencana Integrasi Lapisan Lanjutan", expanded=False):
-        st.markdown("""
-            - **Densitas Kelurusan (Lineament Density):** Ekstraksi sesar otomatis dari DEM SRTM 30m.
-            - **Alterasi Hidrotermal:** Band ratio mineral ASTER (Al-OH, Fe-oxide, silika).
-            - **Mikro-Seismisitas:** Katalog gempa tektonik lokal BMKG Sulawesi Utara.
-        """)
+    # ── Rencana integrasi lanjutan ───────────────────────────────────────────
+    with st.expander("Rencana integrasi lapisan lanjutan", expanded=False):
+        st.markdown(
+            """
+- **Densitas kelurusan:** ekstraksi sesar otomatis dari DEM SRTM 30 m.
+- **Alterasi hidrotermal:** rasio band mineral ASTER (Al-OH, oksida besi, silika).
+- **Mikro-seismisitas:** katalog gempa tektonik lokal BMKG Sulawesi Utara.
+            """
+        )
