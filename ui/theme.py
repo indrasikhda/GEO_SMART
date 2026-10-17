@@ -79,7 +79,9 @@ footer {
     visibility: hidden !important;
 }
 
-.main .block-container {
+/* Container utama: selector lama (.main) + baru (stMainBlockContainer) */
+.main .block-container,
+[data-testid="stMainBlockContainer"] {
     padding-top: 1rem !important;
     padding-bottom: 2.5rem !important;
     padding-left: 2rem !important;
@@ -335,6 +337,7 @@ footer {
     font-weight: 800 !important;
     color: var(--text-primary) !important;
     margin: 0 !important;
+    padding: 0 !important;
     letter-spacing: -0.02em !important;
     line-height: 1.2 !important;
 }
@@ -391,17 +394,30 @@ footer {
     border-color: #1A4335 !important;
 }
 
+/* Label KPI: huruf normal, gaya referensi */
 .kpi-label {
-    font-size: 0.72rem !important;
-    font-weight: 700 !important;
+    font-size: 0.78rem !important;
+    font-weight: 500 !important;
     color: var(--text-muted) !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.06em !important;
+    text-transform: none !important;
+    letter-spacing: 0 !important;
     margin-bottom: 0.35rem !important;
 }
 
 .bento-kpi.dark .kpi-label {
     color: var(--sidebar-text-muted) !important;
+}
+
+.kpi-main {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.kpi-spark {
+    flex-shrink: 0;
+    line-height: 0;
 }
 
 .kpi-value {
@@ -442,7 +458,7 @@ footer {
 .kpi-trend.warning { background: #FEF3C7 !important; color: #B45309 !important; }
 
 /* ─────────────────────────────────────────────────────────────────────────
-   BENTO CONTENT CARDS
+   BENTO CONTENT CARDS (HTML murni, tanpa widget di dalamnya)
 ───────────────────────────────────────────────────────────────────────── */
 .bento-card {
     background: var(--bg-card) !important;
@@ -556,6 +572,99 @@ footer {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
+   CARD SYSTEM: st.container(key="card_...") → kartu sungguhan
+   Pakai key berawalan: card_ (putih), cardmint_ (mint), carddark_ (gelap)
+───────────────────────────────────────────────────────────────────────── */
+[class*="st-key-card"] {
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: var(--radius-lg) !important;
+    box-shadow: var(--shadow-card) !important;
+    padding: 1.15rem 1.3rem !important;
+    gap: 0.75rem !important;
+}
+[class*="st-key-cardmint"] {
+    background: #E6F4EC !important;
+    border-color: #CDE8D8 !important;
+    box-shadow: none !important;
+}
+[class*="st-key-carddark"] {
+    background: linear-gradient(145deg, #0D2B22 0%, #081C16 100%) !important;
+    border-color: #1E503F !important;
+    color: #FFFFFF !important;
+}
+
+/* Judul kartu (dipakai card_header) */
+.card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+.card-head-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+}
+.card-head-sub {
+    font-size: 0.74rem;
+    color: var(--text-muted);
+    margin-top: 0.1rem;
+}
+
+/* Baris statistik bersih (label kiri, nilai kanan) */
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border-subtle);
+}
+.stat-row:last-child { border-bottom: none; }
+.stat-row .l { font-size: 0.8rem; color: var(--text-muted); }
+.stat-row .v { font-size: 0.9rem; font-weight: 700; color: var(--text-primary); }
+
+/* Tooltip info inline */
+.geo-tooltip-wrap { display: inline-flex; align-items: center; gap: 0.2rem; }
+.geo-info-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #E2E8F0;
+    color: var(--text-muted);
+    font-size: 0.6rem;
+    font-weight: 700;
+    cursor: help;
+}
+
+/* Radio horizontal → pill toggle (berlaku untuk semua st.radio di area konten) */
+div[role="radiogroup"] { gap: 0.4rem !important; }
+div[role="radiogroup"] > label {
+    background: #F1F7F4;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-pill);
+    padding: 0.3rem 0.9rem;
+    margin: 0 !important;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+div[role="radiogroup"] > label > div:first-of-type { display: none !important; }
+div[role="radiogroup"] > label p {
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+    color: var(--text-secondary) !important;
+}
+div[role="radiogroup"] > label:has(input:checked) {
+    background: var(--bg-card-dark);
+    border-color: var(--bg-card-dark);
+}
+div[role="radiogroup"] > label:has(input:checked) p { color: #FFFFFF !important; }
+
+/* ─────────────────────────────────────────────────────────────────────────
    LEGACY COMPATIBILITY
 ───────────────────────────────────────────────────────────────────────── */
 .geo-badge { display: inline-flex; align-items: center; padding: 0.2rem 0.6rem; border-radius: var(--radius-pill); font-size: 0.68rem; font-weight: 700; text-transform: uppercase; }
@@ -570,6 +679,7 @@ footer {
 
 </style>
 """
+
 
 def inject_css():
     """Inject the GEO-SMART design system CSS into the Streamlit app."""
