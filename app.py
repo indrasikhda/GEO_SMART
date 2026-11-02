@@ -28,24 +28,24 @@ from views.methods import render_methods
 # Tanpa emoji di sidebar agar tampilan bersih dan profesional
 # ═══════════════════════════════════════════════════════════════════════════
 pages = {
-    "Ringkasan": [
-        st.Page(render_overview, title="Ringkasan", default=True),
+    "Overview": [
+        st.Page(render_overview, title="Overview", default=True),
     ],
-    "Data & Bukti": [
-        st.Page(render_remote_sensing, title="Penginderaan Jauh"),
-        st.Page(render_evidence, title="Bukti Multi-Sumber"),
-        st.Page(render_data_sources, title="Sumber Data"),
+    "Data & Evidence": [
+        st.Page(render_remote_sensing, title="Remote Sensing"),
+        st.Page(render_evidence, title="Multi-Source Evidence"),
+        st.Page(render_data_sources, title="Data Source"),
     ],
-    "Analisis": [
+    "Analysis": [
         st.Page(render_fahp_gpi, title="FAHP & GPI"),
-        st.Page(render_priority, title="Zona Prioritas"),
+        st.Page(render_priority, title="Priority Zones"),
     ],
-    "Pemantauan": [
-        st.Page(render_monitoring, title="Monitoring GMN"),
-        st.Page(render_temporal, title="Monitoring Temporal"),
+    "Monitoring": [
+        st.Page(render_monitoring, title="GMN Monitoring"),
+        st.Page(render_temporal, title="Temporal Monitoring"),
     ],
-    "Referensi": [
-        st.Page(render_methods, title="Metode"),
+    "Reference": [
+        st.Page(render_methods, title="Method"),
     ],
 }
 
